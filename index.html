@@ -12,21 +12,19 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #F7F7F7; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Stile Custom */
         .btn-primary { @apply bg-rose-600 hover:bg-rose-700 text-white font-medium py-3 px-4 rounded-xl transition shadow-md w-full flex justify-center items-center gap-2; }
-        .btn-secondary { @apply bg-white border border-gray-300 text-gray-700 font-medium py-3 px-4 rounded-xl hover:bg-gray-50 transition w-full; }
         .input-field { @apply w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition; }
         .card { @apply bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden; }
-        
-        /* Tabs */
         .tab-btn { @apply px-4 py-3 text-sm font-medium text-gray-500 border-b-2 border-transparent transition flex-1 text-center; }
         .tab-btn.active { @apply text-rose-600 border-rose-600; }
     </style>
 </head>
-<body class="text-gray-800">
+<body class="text-gray-800 pb-20">
+
+    <div id="connection-status" class="hidden text-white text-xs font-bold text-center py-1"></div>
 
     <section id="login-screen" class="min-h-screen flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm fade-in">
@@ -35,24 +33,25 @@
                     <i data-lucide="building-2"></i>
                 </div>
                 <h1 class="text-2xl font-bold text-gray-900">Gestione Staff</h1>
-                <p class="text-gray-500 mt-2 text-sm">Inserisci le credenziali</p>
+                <p class="text-gray-500 mt-2 text-sm">Accesso Riservato</p>
             </div>
             
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Utente</label>
-                    <input type="text" id="email" placeholder="admin" class="input-field" value="admin">
+                    <input type="text" id="email" placeholder="Es: admin" class="input-field">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
-                    <input type="password" id="password" placeholder="Password" class="input-field" value="2026">
+                    <input type="password" id="password" placeholder="Password" class="input-field">
                 </div>
                 <button type="submit" class="btn-primary mt-6">Accedi</button>
             </form>
+            <p class="text-center text-xs text-gray-400 mt-4">Credenziali: admin / 2026</p>
         </div>
     </section>
 
-    <section id="dashboard-screen" class="min-h-screen hidden pb-20">
+    <section id="dashboard-screen" class="min-h-screen hidden">
         <nav class="bg-white border-b px-6 py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm">
             <div class="flex items-center gap-2 text-rose-600 font-bold text-lg">
                 <i data-lucide="layout-grid"></i> GestorePro
@@ -62,13 +61,15 @@
 
         <main class="max-w-xl mx-auto mt-6 px-4">
             <h2 class="text-xl font-bold text-gray-900 mb-4">Le tue Strutture</h2>
-            <div id="loading-structures" class="text-center py-10 text-gray-400">Caricamento...</div>
-            <div id="structures-grid" class="grid gap-4">
-                </div>
+            <div id="loading-structures" class="text-center py-10 text-gray-400">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600 mx-auto mb-2"></div>
+                Caricamento...
+            </div>
+            <div id="structures-grid" class="grid gap-4"></div>
         </main>
     </section>
 
-    <section id="detail-screen" class="min-h-screen hidden bg-gray-50 pb-24">
+    <section id="detail-screen" class="min-h-screen hidden bg-gray-50">
         <div class="bg-white sticky top-0 z-40 border-b shadow-sm">
             <div class="px-4 py-3 flex items-center gap-3">
                 <button onclick="goHome()" class="p-2 hover:bg-gray-100 rounded-full text-gray-600"><i data-lucide="arrow-left"></i></button>
@@ -77,161 +78,137 @@
                     <p class="text-xs text-gray-500">Pannello Operativo</p>
                 </div>
             </div>
-            
             <div class="flex px-2">
                 <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn active">Inventario</button>
                 <button onclick="switchTab('orders')" id="tab-orders" class="tab-btn">Ordini</button>
-                <button onclick="switchTab('info')" id="tab-info" class="tab-btn">Info Accesso</button>
+                <button onclick="switchTab('info')" id="tab-info" class="tab-btn">Info</button>
             </div>
         </div>
 
-        <main class="max-w-xl mx-auto p-4">
-            
+        <main class="max-w-xl mx-auto p-4 pb-24">
             <div id="view-inventory" class="fade-in">
                 <div class="bg-blue-50 text-blue-800 p-4 rounded-xl mb-4 text-sm flex gap-2">
                     <i data-lucide="info" class="w-5 h-5 shrink-0"></i>
-                    <p>Controlla la merce presente e inserisci la quantità reale. Firma in fondo per salvare.</p>
+                    <p>Inserisci le quantità attuali e firma per salvare.</p>
                 </div>
-                
-                <div id="inventory-list" class="space-y-3">
-                    </div>
-
+                <div id="inventory-list" class="space-y-3"></div>
                 <div class="mt-8 bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
                     <label class="block text-sm font-bold text-gray-700 mb-2">Firma Operatore *</label>
-                    <input type="text" id="operator-signature" placeholder="Digita il tuo nome..." class="input-field mb-2">
-                    <button onclick="saveInventory()" class="btn-primary mt-2">
-                        <i data-lucide="save"></i> Salva Dichiarazione
-                    </button>
+                    <input type="text" id="operator-signature" placeholder="Es. Mario Rossi" class="input-field mb-2">
+                    <button onclick="saveInventory()" class="btn-primary mt-2"><i data-lucide="save"></i> Salva</button>
                 </div>
             </div>
 
             <div id="view-orders" class="hidden fade-in">
-                
                 <div id="orders-history-view">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-gray-800">Storico Richieste</h3>
-                        <button onclick="showNewOrderForm()" class="bg-rose-600 text-white p-2 rounded-full shadow-lg">
-                            <i data-lucide="plus"></i>
-                        </button>
+                        <h3 class="font-bold text-gray-800">Storico</h3>
+                        <button onclick="showNewOrderForm()" class="bg-rose-600 text-white p-2 rounded-full shadow-lg"><i data-lucide="plus"></i></button>
                     </div>
-                    <div id="orders-list" class="space-y-3">
-                        <p class="text-gray-400 text-center py-4">Nessun ordine recente.</p>
-                    </div>
+                    <div id="orders-list" class="space-y-3"></div>
                 </div>
-
                 <div id="orders-new-form" class="hidden">
-                    <button onclick="hideNewOrderForm()" class="text-sm text-gray-500 mb-4 flex items-center gap-1">
-                        <i data-lucide="chevron-left"></i> Torna allo storico
-                    </button>
-                    <h3 class="font-bold text-lg mb-4">Nuova Richiesta Fornitura</h3>
-                    <div id="order-products-list" class="space-y-3 mb-6">
-                        </div>
-                    <textarea id="order-notes" class="input-field mb-4" placeholder="Note aggiuntive per la reception..."></textarea>
-                    <button onclick="sendOrder()" class="btn-primary">Invia a Reception</button>
+                    <button onclick="hideNewOrderForm()" class="text-sm text-gray-500 mb-4 flex items-center gap-1"><i data-lucide="chevron-left"></i> Annulla</button>
+                    <h3 class="font-bold text-lg mb-4">Nuovo Ordine</h3>
+                    <div id="order-products-list" class="space-y-3 mb-6"></div>
+                    <textarea id="order-notes" class="input-field mb-4" placeholder="Note per la reception..."></textarea>
+                    <button onclick="sendOrder()" class="btn-primary">Invia Ordine</button>
                 </div>
             </div>
 
             <div id="view-info" class="hidden fade-in">
                 <div class="card p-6">
-                    <h3 class="text-gray-500 text-xs uppercase font-bold tracking-wider mb-4">Dati Accesso Struttura</h3>
-                    
-                    <div class="mb-6">
-                        <label class="text-sm text-gray-400">Indirizzo</label>
-                        <p id="info-address" class="text-lg font-medium text-gray-900">Via Roma 123</p>
-                    </div>
-
-                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <div class="flex items-start gap-3">
-                            <i data-lucide="key" class="text-rose-600 mt-1"></i>
-                            <div>
-                                <label class="text-sm font-bold text-gray-900">Codici & Note</label>
-                                <p id="info-codes" class="text-gray-600 mt-1 whitespace-pre-line">Loading...</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-6 pt-6 border-t border-gray-100 text-center">
-                        <a href="#" class="text-rose-600 font-medium text-sm">Apri posizione su Maps</a>
-                    </div>
+                    <h3 class="text-gray-500 text-xs uppercase font-bold tracking-wider mb-4">Accesso</h3>
+                    <div class="mb-6"><label class="text-sm text-gray-400">Indirizzo</label><p id="info-address" class="font-medium">...</p></div>
+                    <div class="bg-gray-50 p-4 rounded-lg"><label class="text-sm font-bold">Codici & Note</label><p id="info-codes" class="text-gray-600 mt-1 whitespace-pre-line">...</p></div>
                 </div>
             </div>
-
         </main>
     </section>
 
     <script>
-        // --- 1. CONFIGURAZIONE SUPABASE ---
+        // CONFIGURAZIONE CHIAVI
         const SUPABASE_URL = 'https://nqmbxdyikwwpqbdasgmn.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xbWJ4ZHlpa3d3cHFiZGFzZ21uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyOTM5MTgsImV4cCI6MjA4Mjg2OTkxOH0.psJK-Q6Ad0jxkIaM7Qi_vZMfdi3lP6p-4q-IJvrSc-g';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        // --- 2. STATO DELL'APP ---
+        
+        let supabase;
         let currentStructure = null;
         let productsList = [];
 
-        // --- 3. GESTIONE LOGIN (PASSWORD MODIFICATA) ---
+        // INIT APP
+        window.onload = function() {
+            if (window.supabase) {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                lucide.createIcons();
+                console.log("Supabase caricato correttemente");
+            } else {
+                alert("Errore caricamento librerie. Ricarica la pagina.");
+            }
+        };
+
+        // --- GESTIONE LOGIN CORRETTA ---
         function handleLogin(e) {
             e.preventDefault();
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-
-            // Login con PASSWORD FISSA: 2026
-            if (email === 'admin' && pass === '2026') {
+            
+            // Prendo i valori e rimuovo gli spazi vuoti (trim) e rendo l'email minuscola
+            const emailInput = document.getElementById('email').value.trim();
+            const passInput = document.getElementById('password').value.trim();
+            
+            // Logica Login Hardcoded (ADMIN / 2026)
+            if (emailInput.toLowerCase() === 'admin' && passInput === '2026') {
+                // Login OK
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('dashboard-screen').classList.remove('hidden');
                 loadStructures();
             } else {
-                alert("Credenziali errate! Usa: admin / 2026");
+                // Login Errato
+                alert("Password o Utente errati.\nProva con: admin / 2026");
             }
         }
+
         function logout() { location.reload(); }
 
-        // --- 4. DASHBOARD (Carica Strutture) ---
+        // --- DASHBOARD ---
         async function loadStructures() {
-            const loader = document.getElementById('loading-structures');
-            const grid = document.getElementById('structures-grid');
-            
-            const { data, error } = await supabase.from('structures').select('*');
+            try {
+                const { data, error } = await supabase.from('structures').select('*');
+                document.getElementById('loading-structures').classList.add('hidden');
+                const grid = document.getElementById('structures-grid');
+                
+                if (error) throw error;
+                
+                grid.innerHTML = '';
+                if(data.length === 0) grid.innerHTML = '<p class="text-center text-gray-400">Nessuna struttura trovata nel DB.</p>';
 
-            loader.classList.add('hidden');
-            if(error) { grid.innerHTML = 'Errore caricamento: ' + error.message; return; }
-
-            grid.innerHTML = '';
-            data.forEach(s => {
-                const el = document.createElement('div');
-                el.className = 'card cursor-pointer hover:shadow-md transition';
-                el.onclick = () => openStructure(s);
-                el.innerHTML = `
-                    <div class="h-32 bg-gray-200 relative">
-                        <img src="${s.image_url || 'https://via.placeholder.com/500'}" class="w-full h-full object-cover">
-                    </div>
-                    <div class="p-4">
-                        <h3 class="font-bold text-gray-900">${s.name}</h3>
-                        <p class="text-sm text-gray-500 flex items-center gap-1 mt-1"><i data-lucide="map-pin" class="w-3"></i> ${s.address}</p>
-                    </div>
-                `;
-                grid.appendChild(el);
-            });
-            lucide.createIcons();
+                data.forEach(s => {
+                    // Creiamo l'elemento manualmente per gestire meglio il click
+                    const div = document.createElement('div');
+                    div.className = "card cursor-pointer hover:shadow-md transition";
+                    div.innerHTML = `
+                        <div class="h-32 bg-gray-200 relative"><img src="${s.image_url || 'https://via.placeholder.com/500'}" class="w-full h-full object-cover"></div>
+                        <div class="p-4"><h3 class="font-bold text-gray-900">${s.name}</h3><p class="text-sm text-gray-500">${s.address || ''}</p></div>
+                    `;
+                    div.onclick = () => openStructure(s); // Click handler diretto
+                    grid.appendChild(div);
+                });
+            } catch (err) {
+                alert("Errore DB: " + err.message);
+            }
         }
 
-        // --- 5. APERTURA DETTAGLIO ---
-        async function openStructure(structure) {
-            currentStructure = structure;
-            
-            // UI Update
+        // --- APERTURA STRUTTURA ---
+        async function openStructure(s) {
+            currentStructure = s;
             document.getElementById('dashboard-screen').classList.add('hidden');
             document.getElementById('detail-screen').classList.remove('hidden');
-            document.getElementById('detail-title').innerText = structure.name;
             
-            // Popola Info Tab
-            document.getElementById('info-address').innerText = structure.address || 'N/A';
-            document.getElementById('info-codes').innerText = structure.access_info || 'Nessun codice registrato';
-
-            // Carica prodotti e resetta viste
+            document.getElementById('detail-title').innerText = s.name;
+            document.getElementById('info-address').innerText = s.address || '--';
+            document.getElementById('info-codes').innerText = s.access_info || 'Nessun codice';
+            
             await loadProducts();
             switchTab('inventory');
-            loadOrdersHistory(); // Carica storico ordini
+            loadOrdersHistory();
         }
 
         function goHome() {
@@ -243,193 +220,118 @@
             const { data } = await supabase.from('products').select('*');
             productsList = data || [];
             renderInventoryForm();
-            renderOrderForm(); // Prepara anche il form ordini
+            renderOrderForm();
         }
 
-        // --- 6. LOGICA TAB INVENTARIO ---
+        // --- INVENTARIO ---
         function renderInventoryForm() {
-            const container = document.getElementById('inventory-list');
-            container.innerHTML = '';
-
+            const list = document.getElementById('inventory-list');
+            list.innerHTML = '';
             productsList.forEach(p => {
-                const row = document.createElement('div');
-                row.className = 'bg-white p-3 rounded-xl border border-gray-100 flex items-center justify-between shadow-sm';
-                row.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="bg-gray-100 p-2 rounded-lg text-gray-500"><i data-lucide="package" size="18"></i></div>
-                        <div>
-                            <p class="font-medium text-sm text-gray-900">${p.name}</p>
-                            <p class="text-xs text-gray-400">${p.unit}</p>
+                list.innerHTML += `
+                    <div class="bg-white p-3 rounded-xl border border-gray-100 flex items-center justify-between shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-gray-100 p-2 rounded-lg text-gray-500"><i data-lucide="package" size="18"></i></div>
+                            <div><p class="font-medium text-sm text-gray-900">${p.name}</p><p class="text-xs text-gray-400">${p.unit}</p></div>
                         </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <input type="number" id="inv-qty-${p.id}" class="w-16 h-10 border rounded-lg text-center font-bold focus:ring-2 focus:ring-rose-500 focus:outline-none" placeholder="0">
-                    </div>
-                `;
-                container.appendChild(row);
+                        <input type="number" id="inv-qty-${p.id}" class="w-16 h-10 border rounded-lg text-center font-bold" placeholder="0">
+                    </div>`;
             });
             lucide.createIcons();
         }
 
         async function saveInventory() {
-            const signer = document.getElementById('operator-signature').value;
+            const signer = document.getElementById('operator-signature').value.trim();
             if(!signer) return alert("Inserisci la firma (il tuo nome)!");
 
-            // 1. Crea header inventario
-            const { data: invData, error: invError } = await supabase
-                .from('inventories')
-                .insert([{ structure_id: currentStructure.id, operator_name: signer }])
-                .select();
+            const { data, error } = await supabase.from('inventories').insert([{ structure_id: currentStructure.id, operator_name: signer }]).select();
+            if(error) return alert("Errore: " + error.message);
+            
+            const invId = data[0].id;
+            const items = productsList
+                .map(p => ({ 
+                    inventory_id: invId, 
+                    product_name: p.name, 
+                    quantity: parseInt(document.getElementById(`inv-qty-${p.id}`).value) || 0 
+                }))
+                .filter(i => i.quantity > 0); // Salva solo se > 0 o vuoi salvare anche gli zero? Qui salva solo >0.
 
-            if(invError) return alert("Errore salvataggio: " + invError.message);
-            const inventoryId = invData[0].id;
-
-            // 2. Prepara items
-            const itemsToInsert = [];
-            productsList.forEach(p => {
-                const qtyVal = document.getElementById(`inv-qty-${p.id}`).value;
-                if(qtyVal && qtyVal !== "") {
-                    itemsToInsert.push({
-                        inventory_id: inventoryId,
-                        product_name: p.name,
-                        quantity: parseInt(qtyVal)
-                    });
-                }
-            });
-
-            // 3. Salva items
-            if(itemsToInsert.length > 0) {
-                await supabase.from('inventory_items').insert(itemsToInsert);
-            }
-
-            alert("Inventario Salvato con Successo!");
+            if(items.length > 0) await supabase.from('inventory_items').insert(items);
+            
+            alert("✅ Inventario Salvato!");
             document.getElementById('operator-signature').value = '';
-            // Pulisci input
             productsList.forEach(p => document.getElementById(`inv-qty-${p.id}`).value = '');
-            // Sposta su ordini
             switchTab('orders');
         }
 
-        // --- 7. LOGICA TAB ORDINI ---
-        
+        // --- ORDINI ---
         async function loadOrdersHistory() {
-            const container = document.getElementById('orders-list');
-            container.innerHTML = '<p class="text-gray-400 text-sm">Caricamento...</p>';
+            const { data } = await supabase.from('orders').select('*').eq('structure_id', currentStructure.id).order('created_at', { ascending: false });
+            const list = document.getElementById('orders-list');
+            list.innerHTML = '';
+            if(!data || data.length === 0) list.innerHTML = '<p class="text-center text-gray-400 py-4">Nessun ordine.</p>';
             
-            const { data } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('structure_id', currentStructure.id)
-                .order('created_at', { ascending: false });
-
-            container.innerHTML = '';
-            if(!data || data.length === 0) {
-                container.innerHTML = '<div class="text-center py-6 bg-white rounded-xl border border-dashed"><p class="text-gray-400">Nessun ordine effettuato.</p></div>';
-                return;
-            }
-
-            data.forEach(order => {
-                // Semplice card ordine
-                const date = new Date(order.created_at).toLocaleDateString('it-IT');
-                const statusColor = order.status === 'in_attesa' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700';
-                
-                const div = document.createElement('div');
-                div.className = 'bg-white p-4 rounded-xl border border-gray-100 shadow-sm';
-                div.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <span class="text-xs font-bold ${statusColor} px-2 py-1 rounded-md uppercase tracking-wide">${order.status.replace('_', ' ')}</span>
-                            <p class="text-xs text-gray-400 mt-1">${date}</p>
-                        </div>
-                        <i data-lucide="shopping-bag" class="text-gray-300"></i>
-                    </div>
-                    <p class="text-sm text-gray-600 italic">"${order.notes || 'Nessuna nota'}"</p>
-                `;
-                container.appendChild(div);
+            data.forEach(o => {
+                const date = new Date(o.created_at).toLocaleDateString('it-IT');
+                const color = o.status === 'in_attesa' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700';
+                list.innerHTML += `
+                    <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <div class="flex justify-between mb-1"><span class="text-xs font-bold ${color} px-2 py-1 rounded uppercase">${o.status.replace('_',' ')}</span><span class="text-xs text-gray-400">${date}</span></div>
+                        <p class="text-sm text-gray-600 italic">"${o.notes || ''}"</p>
+                    </div>`;
             });
-            lucide.createIcons();
         }
 
-        function showNewOrderForm() {
-            document.getElementById('orders-history-view').classList.add('hidden');
-            document.getElementById('orders-new-form').classList.remove('hidden');
-        }
-        function hideNewOrderForm() {
-            document.getElementById('orders-new-form').classList.add('hidden');
-            document.getElementById('orders-history-view').classList.remove('hidden');
-        }
+        function showNewOrderForm() { document.getElementById('orders-history-view').classList.add('hidden'); document.getElementById('orders-new-form').classList.remove('hidden'); }
+        function hideNewOrderForm() { document.getElementById('orders-new-form').classList.add('hidden'); document.getElementById('orders-history-view').classList.remove('hidden'); }
 
         function renderOrderForm() {
-            const container = document.getElementById('order-products-list');
-            container.innerHTML = '';
-            
+            const list = document.getElementById('order-products-list');
+            list.innerHTML = '';
             productsList.forEach(p => {
-                const row = document.createElement('div');
-                row.className = 'flex items-center justify-between border-b pb-2';
-                row.innerHTML = `
-                    <span class="text-sm font-medium text-gray-700">${p.name}</span>
-                    <div class="flex items-center gap-2">
-                        <button onclick="changeQty('${p.id}', -1)" class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-bold">-</button>
-                        <input type="number" id="ord-qty-${p.id}" value="0" class="w-10 text-center font-bold border-none focus:ring-0" readonly>
-                        <button onclick="changeQty('${p.id}', 1)" class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center shadow font-bold">+</button>
-                    </div>
-                `;
-                container.appendChild(row);
+                list.innerHTML += `
+                    <div class="flex justify-between border-b pb-2 items-center">
+                        <span class="text-sm font-medium">${p.name}</span>
+                        <div class="flex gap-2 items-center">
+                            <button onclick="modQty('${p.id}', -1)" class="w-8 h-8 rounded-full bg-gray-100 font-bold">-</button>
+                            <input type="number" id="ord-qty-${p.id}" value="0" class="w-10 text-center font-bold border-none" readonly>
+                            <button onclick="modQty('${p.id}', 1)" class="w-8 h-8 rounded-full bg-rose-600 text-white font-bold">+</button>
+                        </div>
+                    </div>`;
             });
         }
 
-        function changeQty(id, delta) {
-            const input = document.getElementById(`ord-qty-${id}`);
-            let val = parseInt(input.value) + delta;
-            if(val < 0) val = 0;
-            input.value = val;
+        function modQty(id, d) {
+            const el = document.getElementById(`ord-qty-${id}`);
+            el.value = Math.max(0, parseInt(el.value) + d);
         }
 
         async function sendOrder() {
             const notes = document.getElementById('order-notes').value;
+            const { data, error } = await supabase.from('orders').insert([{ structure_id: currentStructure.id, notes: notes, status: 'in_attesa' }]).select();
+            if(error) return alert("Errore: " + error.message);
+
+            const items = productsList
+                .map(p => ({ order_id: data[0].id, product_name: p.name, quantity: parseInt(document.getElementById(`ord-qty-${p.id}`).value) || 0 }))
+                .filter(i => i.quantity > 0);
+                
+            if(items.length > 0) await supabase.from('order_items').insert(items);
             
-            // 1. Crea Ordine
-            const { data: ordData, error } = await supabase
-                .from('orders')
-                .insert([{ structure_id: currentStructure.id, notes: notes, status: 'in_attesa' }])
-                .select();
-            
-            if(error) return alert("Errore invio: " + error.message);
-            const orderId = ordData[0].id;
-
-            // 2. Items
-            const items = [];
-            productsList.forEach(p => {
-                const q = parseInt(document.getElementById(`ord-qty-${p.id}`).value);
-                if(q > 0) {
-                    items.push({ order_id: orderId, product_name: p.name, quantity_ordered: q });
-                }
-            });
-
-            if(items.length > 0) {
-                await supabase.from('order_items').insert(items);
-            }
-
-            alert("Ordine Inviato alla Reception!");
+            alert("✅ Ordine Inviato!");
             hideNewOrderForm();
-            loadOrdersHistory(); // Ricarica lista
-            // Reset quantities
+            loadOrdersHistory();
             productsList.forEach(p => document.getElementById(`ord-qty-${p.id}`).value = 0);
             document.getElementById('order-notes').value = '';
         }
 
-        // --- UTILS ---
-        function switchTab(tabName) {
-            ['inventory', 'orders', 'info'].forEach(t => {
-                document.getElementById(`view-${t}`).classList.add('hidden');
-                document.getElementById(`tab-${t}`).classList.remove('active');
+        function switchTab(t) {
+            ['inventory','orders','info'].forEach(x => {
+                document.getElementById(`view-${x}`).classList.add('hidden');
+                document.getElementById(`tab-${x}`).classList.remove('active');
             });
-            document.getElementById(`view-${tabName}`).classList.remove('hidden');
-            document.getElementById(`tab-${tabName}`).classList.add('active');
+            document.getElementById(`view-${t}`).classList.remove('hidden');
+            document.getElementById(`tab-${t}`).classList.add('active');
         }
-
-        // Init icone
-        lucide.createIcons();
     </script>
 </body>
 </html>
