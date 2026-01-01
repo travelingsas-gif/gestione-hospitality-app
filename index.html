@@ -24,8 +24,6 @@
 </head>
 <body class="text-gray-800 pb-20">
 
-    <div id="connection-status" class="hidden text-white text-xs font-bold text-center py-1"></div>
-
     <section id="login-screen" class="min-h-screen flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm fade-in">
             <div class="text-center mb-8">
@@ -36,18 +34,24 @@
                 <p class="text-gray-500 mt-2 text-sm">Accesso Riservato</p>
             </div>
             
-            <form onsubmit="handleLogin(event)" class="space-y-4">
+            <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Utente</label>
-                    <input type="text" id="email" placeholder="Es: admin" class="input-field">
+                    <input type="text" id="email" placeholder="admin" class="input-field">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
-                    <input type="password" id="password" placeholder="Password" class="input-field">
+                    <div class="relative">
+                        <input type="password" id="password" placeholder="2026" class="input-field">
+                        <button onclick="togglePass()" class="absolute right-3 top-3 text-gray-400">
+                            <i data-lucide="eye" size="20"></i>
+                        </button>
+                    </div>
                 </div>
-                <button type="submit" class="btn-primary mt-6">Accedi</button>
-            </form>
-            <p class="text-center text-xs text-gray-400 mt-4">Credenziali: admin / 2026</p>
+                <button onclick="handleLogin()" class="btn-primary mt-6">Accedi</button>
+            </div>
+            
+            <div id="login-error" class="hidden mt-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-center"></div>
         </div>
     </section>
 
@@ -63,7 +67,7 @@
             <h2 class="text-xl font-bold text-gray-900 mb-4">Le tue Strutture</h2>
             <div id="loading-structures" class="text-center py-10 text-gray-400">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600 mx-auto mb-2"></div>
-                Caricamento...
+                Connessione al DB...
             </div>
             <div id="structures-grid" class="grid gap-4"></div>
         </main>
@@ -127,7 +131,6 @@
     </section>
 
     <script>
-        // CONFIGURAZIONE CHIAVI
         const SUPABASE_URL = 'https://nqmbxdyikwwpqbdasgmn.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xbWJ4ZHlpa3d3cHFiZGFzZ21uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcyOTM5MTgsImV4cCI6MjA4Mjg2OTkxOH0.psJK-Q6Ad0jxkIaM7Qi_vZMfdi3lP6p-4q-IJvrSc-g';
         
@@ -135,40 +138,49 @@
         let currentStructure = null;
         let productsList = [];
 
-        // INIT APP
         window.onload = function() {
             if (window.supabase) {
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 lucide.createIcons();
-                console.log("Supabase caricato correttemente");
             } else {
-                alert("Errore caricamento librerie. Ricarica la pagina.");
+                alert("Errore caricamento. Controlla la connessione.");
             }
         };
 
-        // --- GESTIONE LOGIN CORRETTA ---
-        function handleLogin(e) {
-            e.preventDefault();
-            
-            // Prendo i valori e rimuovo gli spazi vuoti (trim) e rendo l'email minuscola
-            const emailInput = document.getElementById('email').value.trim();
-            const passInput = document.getElementById('password').value.trim();
-            
-            // Logica Login Hardcoded (ADMIN / 2026)
-            if (emailInput.toLowerCase() === 'admin' && passInput === '2026') {
-                // Login OK
+        // --- GESTIONE LOGIN BLINDATA ---
+        function handleLogin() {
+            const errorBox = document.getElementById('login-error');
+            errorBox.classList.add('hidden');
+
+            const emailInput = document.getElementById('email').value;
+            const passInput = document.getElementById('password').value;
+
+            // Pulizia aggressiva (rimuove spazi inizio/fine)
+            const cleanEmail = emailInput.trim().toLowerCase();
+            const cleanPass = passInput.trim();
+
+            // ALERT DI DEBUG: Ti dice cosa legge il sistema
+            // Se vedi spazi strani qui, è colpa della tastiera
+            // alert(`DEBUG:\nUtente: '${cleanEmail}'\nPass: '${cleanPass}'`);
+
+            if (cleanEmail === 'admin' && cleanPass === '2026') {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('dashboard-screen').classList.remove('hidden');
                 loadStructures();
             } else {
-                // Login Errato
-                alert("Password o Utente errati.\nProva con: admin / 2026");
+                errorBox.innerText = `Errore: Hai scritto '${cleanEmail}' e '${cleanPass}'. Riprova con admin / 2026`;
+                errorBox.classList.remove('hidden');
             }
+        }
+
+        function togglePass() {
+            const p = document.getElementById('password');
+            p.type = p.type === 'password' ? 'text' : 'password';
         }
 
         function logout() { location.reload(); }
 
-        // --- DASHBOARD ---
+        // --- DATABASE LOGIC ---
         async function loadStructures() {
             try {
                 const { data, error } = await supabase.from('structures').select('*');
@@ -176,19 +188,18 @@
                 const grid = document.getElementById('structures-grid');
                 
                 if (error) throw error;
-                
                 grid.innerHTML = '';
-                if(data.length === 0) grid.innerHTML = '<p class="text-center text-gray-400">Nessuna struttura trovata nel DB.</p>';
+                
+                if(data.length === 0) grid.innerHTML = '<p class="text-center text-gray-400">Nessuna struttura trovata.</p>';
 
                 data.forEach(s => {
-                    // Creiamo l'elemento manualmente per gestire meglio il click
                     const div = document.createElement('div');
                     div.className = "card cursor-pointer hover:shadow-md transition";
                     div.innerHTML = `
                         <div class="h-32 bg-gray-200 relative"><img src="${s.image_url || 'https://via.placeholder.com/500'}" class="w-full h-full object-cover"></div>
                         <div class="p-4"><h3 class="font-bold text-gray-900">${s.name}</h3><p class="text-sm text-gray-500">${s.address || ''}</p></div>
                     `;
-                    div.onclick = () => openStructure(s); // Click handler diretto
+                    div.onclick = () => openStructure(s);
                     grid.appendChild(div);
                 });
             } catch (err) {
@@ -196,7 +207,6 @@
             }
         }
 
-        // --- APERTURA STRUTTURA ---
         async function openStructure(s) {
             currentStructure = s;
             document.getElementById('dashboard-screen').classList.add('hidden');
@@ -223,7 +233,6 @@
             renderOrderForm();
         }
 
-        // --- INVENTARIO ---
         function renderInventoryForm() {
             const list = document.getElementById('inventory-list');
             list.innerHTML = '';
@@ -254,7 +263,7 @@
                     product_name: p.name, 
                     quantity: parseInt(document.getElementById(`inv-qty-${p.id}`).value) || 0 
                 }))
-                .filter(i => i.quantity > 0); // Salva solo se > 0 o vuoi salvare anche gli zero? Qui salva solo >0.
+                .filter(i => i.quantity > 0);
 
             if(items.length > 0) await supabase.from('inventory_items').insert(items);
             
@@ -264,7 +273,6 @@
             switchTab('orders');
         }
 
-        // --- ORDINI ---
         async function loadOrdersHistory() {
             const { data } = await supabase.from('orders').select('*').eq('structure_id', currentStructure.id).order('created_at', { ascending: false });
             const list = document.getElementById('orders-list');
